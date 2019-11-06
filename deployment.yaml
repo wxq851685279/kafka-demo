@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-demo-consumer
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      k8s-app: kafka-demo-consumer
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        k8s-app: kafka-demo-consumer
+    spec:
+      containers:
+        - name: kafka-demo-consumer
+          image: kafka-demo-consumer:1.0.0.SNAPSHOT
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 10001
+          env:
+            - name: spring.kafka.bootstrap-servers
+              value: kafka.default.svc.cluster.local:9092
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-demo-producer
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      k8s-app: kafka-demo-producer
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        k8s-app: kafka-demo-producer
+    spec:
+      containers:
+        - name: kafka-demo-producer
+          image: kafka-demo-producer:1.0.0.SNAPSHOT
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 10002
+          env:
+            - name: spring.kafka.bootstrap-servers
+              value: kafka.default.svc.cluster.local:9092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-demo-producer
+  namespace: default
+spec:
+  ports:
+    - port: 10002
+      targetPort: 10002
+  selector:
+    k8s-app: kafka-demo-producer
+  type: ClusterIP
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kafka-demo-producer
+  namespace: default
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: test.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: kafka-demo-producer
+              servicePort: 10002

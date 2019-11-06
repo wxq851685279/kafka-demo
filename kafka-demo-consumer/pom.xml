@@ -33,6 +33,7 @@
     </dependencies>
 
     <build>
+        <finalName>kafka-demo-consumer</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
